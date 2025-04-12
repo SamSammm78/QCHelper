@@ -108,7 +108,10 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     }
   } else if (info.menuItemId === "convertToCnfans") {
       const result = getPlatformAndIdFromUrl(url);
-
+      if (!result) {
+        showAlert("The link is not supported.");
+        return;
+      }
       const cnfansLink = `https://cnfans.com/product/?shop_type=${result.platform}&id=${result.productId}`
 
       chrome.tabs.create({ url: cnfansLink });

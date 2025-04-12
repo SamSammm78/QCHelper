@@ -128,9 +128,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const currentUrl = tabs[0].url; // URL de l'onglet actif
       const result = getPlatformAndIdFromUrl(currentUrl);
 
+      if (!result) {
+        showCustomAlert("The link is not supported.");
+        return;
+      }
+
       const cnfansLink = `https://cnfans.com/product/?shop_type=${result.platform}&id=${result.productId}`
 
       chrome.tabs.create({ url: cnfansLink });
+
+      
     });
   });
 });
