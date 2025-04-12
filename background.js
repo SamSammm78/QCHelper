@@ -12,6 +12,13 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "Convert to Raw",
     contexts: ["page", "link"], // Menu pour la page entière et les liens
   });
+
+  // Menu contextuel Cnfans pour les pages
+  chrome.contextMenus.create({
+    id: "convertToCnfans",
+    title: "Convert to CNFans",
+    contexts: ["page", "link"], // Menu pour la page entière et les liens
+  });
 });
 
 // Fonction utilitaire pour afficher une alerte dans l'onglet actif
@@ -30,6 +37,37 @@ const getParam = (url, key) => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
+function getPlatformAndIdFromUrl(url) {
+  // Expression régulière pour détecter un lien Taobao
+  const taobaoRegex = /https:\/\/item\.taobao\.com\/item\.htm\?ft=t&id=(\d+)/;
+
+  // Expression régulière pour détecter un lien Weidian
+  const weidianRegex = /https:\/\/weidian\.com\/item\.html\?itemID=(\d+)/;
+
+  let platform = null;
+  let productId = null;
+
+  // Vérification pour Taobao
+  const taobaoMatch = url.match(taobaoRegex);
+  if (taobaoMatch) {
+    platform = 'taobao';
+    productId = taobaoMatch[1];
+  }
+
+  // Vérification pour Weidian
+  const weidianMatch = url.match(weidianRegex);
+  if (weidianMatch) {
+    platform = 'weidian';
+    productId = weidianMatch[1];
+  }
+
+  if (platform && productId) {
+    return { platform, productId };
+  } else {
+    return null; // Retourne null si l'URL n'est ni Taobao ni Weidian
+  }
+}
+
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   const url = info.linkUrl || tab.url; // Utiliser l'URL du lien ou de la page
 
@@ -39,8 +77,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   const productId = idMatch ? idMatch[1] : null;
 
   if (info.menuItemId === "convertToFindsly") {
+    
     if (shopType && productId) {
       const findslyUrl = `https://finds.ly/product/${shopType.toLowerCase()}/${productId}`; // Assurez-vous de rendre shopType en minuscule
+      chrome.tabs.create({ url: findslyUrl });
+    }  else if (url.startsWith("https://item.taobao.com/") || url.startsWith("https://weidian.com/")) {
+      const result = getPlatformAndIdFromUrl(url);
+      const findslyUrl = `https://finds.ly/product/${result.platform.toLowerCase()}/${result.productId}`; // Assurez-vous de rendre shopType en minuscule
       chrome.tabs.create({ url: findslyUrl });
     } else {
       showAlert(tab, "Couldn't extract 'shop_type', 'platform', or product ID from the URL.");
@@ -63,5 +106,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     } else {
       showAlert(tab, "Couldn't extract product ID or shop type from the URL.");
     }
+  } else if (info.menuItemId === "convertToCnfans") {
+      const result = getPlatformAndIdFromUrl(url);
+
+      const cnfansLink = `https://cnfans.com/product/?shop_type=${result.platform}&id=${result.productId}`
+
+      chrome.tabs.create({ url: cnfansLink });
   }
 });

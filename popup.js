@@ -25,6 +25,37 @@ document.addEventListener('DOMContentLoaded', function() {
     return null; // Retourner null si l'ID n'est pas trouvé ou le shopType est invalide
   }
 
+  function getPlatformAndIdFromUrl(url) {
+    // Expression régulière pour détecter un lien Taobao
+    const taobaoRegex = /https:\/\/item\.taobao\.com\/item\.htm\?ft=t&id=(\d+)/;
+  
+    // Expression régulière pour détecter un lien Weidian
+    const weidianRegex = /https:\/\/weidian\.com\/item\.html\?itemID=(\d+)/;
+  
+    let platform = null;
+    let productId = null;
+  
+    // Vérification pour Taobao
+    const taobaoMatch = url.match(taobaoRegex);
+    if (taobaoMatch) {
+      platform = 'taobao';
+      productId = taobaoMatch[1];
+    }
+  
+    // Vérification pour Weidian
+    const weidianMatch = url.match(weidianRegex);
+    if (weidianMatch) {
+      platform = 'weidian';
+      productId = weidianMatch[1];
+    }
+  
+    if (platform && productId) {
+      return { platform, productId };
+    } else {
+      return null; // Retourne null si l'URL n'est ni Taobao ni Weidian
+    }
+  }
+
   // Fonction pour récupérer le shopType (en gérant les majuscules et minuscules)
   function getShopTypeFromUrl(url) {
     const regex = /[?&](shop_type|platform)=([^&]+)/;
@@ -66,10 +97,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Vérifier le paramètre shop_type dans l'URL
       const shopType = getShopTypeFromUrl(currentUrl);
-      if (!shopType) {
+        if (currentUrl.startsWith("https://item.taobao.com/") || currentUrl.startsWith("https://weidian.com/")) {
+          const result = getPlatformAndIdFromUrl(currentUrl);
+          const findslyUrl = `https://finds.ly/product/${result.platform.toLowerCase()}/${result.productId}`; // Assurez-vous de rendre shopType en minuscule
+          chrome.tabs.create({ url: findslyUrl });
+          return;
+      } else if (!shopType) {
         showCustomAlert("The 'shop_type' parameter was not found in the URL.");
         return;
-      }
+      } 
 
       // Transformer l'URL cnfans en URL Weidian
       const result = transformToRawUrl(currentUrl, shopType);
@@ -81,6 +117,20 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         showCustomAlert("Product ID not found in the URL.");
       }
+    });
+  });
+
+  // Écouter le clic sur le bouton "QC"
+  document.getElementById('CnfansButton').addEventListener('click', function() {
+    // Récupérer l'URL actuelle de l'onglet actif
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      
+      const currentUrl = tabs[0].url; // URL de l'onglet actif
+      const result = getPlatformAndIdFromUrl(currentUrl);
+
+      const cnfansLink = `https://cnfans.com/product/?shop_type=${result.platform}&id=${result.productId}`
+
+      chrome.tabs.create({ url: cnfansLink });
     });
   });
 });
