@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "QCHelper",
-    "description": "QCHelper is a lightweight Chrome extension designed to help users quickly convert product links from CNFANS to either Weidian or Finds.ly. With just one click, or a right-click on the page, the extension extracts the product ID and platform type to generate the corresponding URLs.",
+    "description": "QCHelper is a lightweight Chrome extension designed to help users quickly convert product links from CNFANS to either Raw Link or Finds.ly. With just one click, or a right-click on the page, the extension extracts the product ID and platform type to generate the corresponding URLs.",
     "version": "1.0",
     "permissions": ["contextMenus", "activeTab","notifications", "scripting"],
     "background": {
